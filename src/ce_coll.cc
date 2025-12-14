@@ -421,6 +421,69 @@ fail:
   goto exit;
 }
 
+ncclResult_t ncclCeAlltoAllV(struct ncclComm* comm, struct ncclCeCollArgs* args, cudaStream_t stream) {
+  ncclResult_t ret = ncclSuccess;
+
+  // Calculate the size of data each rank sends to every other rank
+  const size_t sizePerElt = args->eltSize;
+  size_t offsets* = (size_t*)args->nElts; // TODO: ensure that sizeof(size_t) == sizeof(void*)
+  uint8_t* mySendBuff = (uint8_t*)args->sendBuff;
+  uint8_t* myRecvBuff = (uint8_t*)args->recvBuff;
+  void* peerRecvBuff;
+  size_t offset;
+  
+  size_t prefix[comm->nRanks];
+  prefix[0] = 0;
+  for (int i = 1; i < comm->nRanks; i++) {
+    prefix[i] = prefix[i-1] + offsets[i-1] * sizePerElt;
+  }
+
+  struct ncclCeBatchOpsParams batchOpsParams = {};
+  NCCLCHECKGOTO(ncclCeInitBatchOpsParams(&batchOpsParams, comm->nRanks * comm->nRanks), ret, fail);
+
+  // Ensure all ranks are ready before starting transfers
+  NCCLCHECKGOTO(ncclMemOpSync(comm, stream), ret, fail);
+
+  // Copy data to other ranks: send data chunk for each destination rank
+  for (int r = 0; r < comm->nRanks; r++) {
+    int dstRank = (comm->rank + r) % comm->nRanks;
+    uint8_t* dstPtr = myRecvBuff + prefix[r];
+
+    if (offsets[r] == 0) continue;
+
+    if (dstRank == comm->rank) {
+      // Local copy for own data
+      batchOpsParams.srcs[batchOpsParams.numOps] = (void*)mySendBuff;
+      batchOpsParams.dsts[batchOpsParams.numOps] = (void*)dstPtr;
+      batchOpsParams.sizes[batchOpsParams.numOps] = offsets[r] * sizePerElt;
+      batchOpsParams.numOps++;
+    } else {
+      // Remote copy to other ranks: send to rank dstRank's receive buffer at position comm->rank
+      offset = dstPtr - (uint8_t*)args->recvWin->userPtr;
+      NCCLCHECKGOTO(ncclDevrGetLsaRankPtr(comm, args->recvWin, offset, dstRank, &peerRecvBuff), ret, fail);
+      batchOpsParams.srcs[batchOpsParams.numOps] = (void*)mySendBuff;
+      batchOpsParams.dsts[batchOpsParams.numOps] = (void*)peerRecvBuff;
+      batchOpsParams.sizes[batchOpsParams.numOps] = offsets[r] * sizePerElt;
+      batchOpsParams.numOps++;
+    }
+  }
+
+  // Check if we need to perform intra-batch synchronization
+  batchOpsParams.intraBatchSync = (batchOpsParams.numOps > comm->ceColl.intraBatchSyncFreq && chunkBytes*batchOpsParams.numOps >= comm->ceColl.intraBatchSyncMsgThreshold);
+
+  // Launch the batch operations
+  NCCLCHECKGOTO(ncclCeLaunchBatchOps(comm, &batchOpsParams, stream), ret, fail);
+
+  // Ensure all transfers are complete across all ranks
+  NCCLCHECKGOTO(ncclMemOpSync(comm, stream), ret, fail);
+
+exit:
+  ncclCeFreeBatchOpsParams(&batchOpsParams);
+  return ret;
+fail:
+  goto exit;
+}
+
 ncclResult_t ncclCeAlltoAll(struct ncclComm* comm, struct ncclCeCollArgs* args, cudaStream_t stream) {
   ncclResult_t ret = ncclSuccess;
 
@@ -597,6 +660,9 @@ ncclResult_t ncclLaunchCeColl(struct ncclComm* comm, struct ncclKernelPlan* plan
       break;
     case ncclFuncAlltoAll:
       NCCLCHECKGOTO(ncclCeAlltoAll(comm, args, stream), ret, fail);
+      break;
+    case ncclFuncAlltoAllV:
+      NCCLCHECKGOTO(ncclCeAlltoAllV(comm, args, stream), ret, fail);
       break;
     case ncclFuncScatter:
       NCCLCHECKGOTO(ncclCeScatter(comm, args, stream), ret, fail);
