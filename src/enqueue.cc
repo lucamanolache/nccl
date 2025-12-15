@@ -2478,7 +2478,18 @@ static ncclResult_t collTaskAppend(
     t->datatype = ncclInt8;
     elementSize = 1;
   }
-  t->trafficBytes = t->count*elementSize*ncclFuncTrafficPerByte(t->func, comm->nRanks);
+  // For AlltoAllV, count contains the sendcounts pointer, so calculate traffic differently
+  if (t->func == ncclFuncAlltoAllV) {
+    // Estimate traffic: sum of all sendcounts * elementSize * nRanks
+    const size_t* sendcounts = (const size_t*)t->count;
+    size_t totalSendElements = 0;
+    for (int r = 0; r < comm->nRanks; r++) {
+      totalSendElements += sendcounts[r];
+    }
+    t->trafficBytes = totalSendElements * elementSize * comm->nRanks;
+  } else {
+    t->trafficBytes = t->count*elementSize*ncclFuncTrafficPerByte(t->func, comm->nRanks);
+  }
   t->opHost = info->op;
   t->opDev = opDev; // C++ struct assignment
   t->chunkSteps = info->chunkSteps;
@@ -2528,7 +2539,18 @@ static ncclResult_t ceCollTaskAppend(
     t->datatype = ncclInt8;
     elementSize = 1;
   }
-  t->trafficBytes = t->count*elementSize*ncclFuncTrafficPerByte(t->func, comm->nRanks);
+  // For AlltoAllV, count contains the sendcounts pointer, so calculate traffic differently
+  if (t->func == ncclFuncAlltoAllV) {
+    // Estimate traffic: sum of all sendcounts * elementSize * nRanks
+    const size_t* sendcounts = (const size_t*)t->count;
+    size_t totalSendElements = 0;
+    for (int r = 0; r < comm->nRanks; r++) {
+      totalSendElements += sendcounts[r];
+    }
+    t->trafficBytes = totalSendElements * elementSize * comm->nRanks;
+  } else {
+    t->trafficBytes = t->count*elementSize*ncclFuncTrafficPerByte(t->func, comm->nRanks);
+  }
   t->opHost = info->op;
   t->opDev = opDev; // C++ struct assignment
   t->chunkSteps = info->chunkSteps;
@@ -2555,7 +2577,7 @@ static ncclResult_t taskAppend(struct ncclComm* comm, struct ncclInfo* info) {
     if (info->count == 0) return ncclSuccess;
 
     if (info->datatype == ncclFloat8e4m3 || info->datatype == ncclFloat8e5m2) {
-      if (comm->minCompCap < 90 && info->coll != ncclFuncAllGather && info->coll != ncclFuncBroadcast && info->coll != ncclFuncAlltoAll && info->coll != ncclFuncScatter && info->coll != ncclFuncGather) {
+      if (comm->minCompCap < 90 && info->coll != ncclFuncAllGather && info->coll != ncclFuncBroadcast && info->coll != ncclFuncAlltoAll && info->coll != ncclFuncAlltoAllV && info->coll != ncclFuncScatter && info->coll != ncclFuncGather) {
         WARN("FP8 reduction support begins with sm90 capable devices.");
         return ncclInvalidArgument;
       }

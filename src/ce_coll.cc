@@ -88,6 +88,7 @@ bool ncclCeImplemented(ncclFunc_t coll, int/*ncclDevRedOp_t*/ red, ncclDataType_
     switch (coll) {
     case ncclFuncAllGather:
     case ncclFuncAlltoAll:
+    case ncclFuncAlltoAllV:
     case ncclFuncScatter:
     case ncclFuncGather:
       return true;
@@ -426,7 +427,7 @@ ncclResult_t ncclCeAlltoAllV(struct ncclComm* comm, struct ncclCeCollArgs* args,
 
   // Calculate the size of data each rank sends to every other rank
   const size_t sizePerElt = args->eltSize;
-  size_t offsets* = (size_t*)args->nElts; // TODO: ensure that sizeof(size_t) == sizeof(void*)
+  size_t* offsets = (size_t*)args->nElts; // TODO: ensure that sizeof(size_t) == sizeof(void*)
   uint8_t* mySendBuff = (uint8_t*)args->sendBuff;
   uint8_t* myRecvBuff = (uint8_t*)args->recvBuff;
   void* peerRecvBuff;

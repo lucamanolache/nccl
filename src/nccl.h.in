@@ -463,6 +463,27 @@ ncclResult_t pncclAlltoAll(const void* sendbuff, void* recvbuff, size_t count,
     ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream);
 
 /*
+ * All-to-All Variable
+ *
+ * Each device sends variable amounts of data to all other devices and receives
+ * variable amounts from all other devices. sendcounts[i] specifies the number
+ * of elements to send to rank i, and recvcounts[i] specifies the number of
+ * elements to receive from rank i.
+ *
+ * Data to send to destination rank j starts at sendbuff + sdispls[j]*datatype_size.
+ * Data received from source rank i is placed at recvbuff + rdispls[i]*datatype_size.
+ *
+ * The send buffer is organized with data for rank 0 first, then rank 1, etc.,
+ * ordered by importance/priority.
+ */
+ncclResult_t  ncclAlltoAllV(const void* sendbuff, const size_t* sendcounts, const size_t* sdispls,
+    void* recvbuff, const size_t* recvcounts, const size_t* rdispls,
+    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream);
+ncclResult_t pncclAlltoAllV(const void* sendbuff, const size_t* sendcounts, const size_t* sdispls,
+    void* recvbuff, const size_t* recvcounts, const size_t* rdispls,
+    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream);
+
+/*
  * Gather
  *
  * Each rank sends count elements from sendbuff to the root rank.
