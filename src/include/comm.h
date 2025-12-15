@@ -229,6 +229,11 @@ struct ncclTaskColl {
   void* collApiEventHandle;
   void* eventHandle;
   uint8_t nChannels;
+
+  // AlltoAllV-specific arrays (only valid when func == ncclFuncAlltoAllV)
+  const size_t* sdispls;
+  const size_t* recvcounts;
+  const size_t* rdispls;
 };
 
 struct ncclTaskP2p {

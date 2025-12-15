@@ -427,16 +427,16 @@ ncclResult_t ncclCeAlltoAllV(struct ncclComm* comm, struct ncclCeCollArgs* args,
 
   // Calculate the size of data each rank sends to every other rank
   const size_t sizePerElt = args->eltSize;
-  size_t* offsets = (size_t*)args->nElts; // TODO: ensure that sizeof(size_t) == sizeof(void*)
+  const size_t* sendcounts = (const size_t*)args->nElts; // sendcounts array
   uint8_t* mySendBuff = (uint8_t*)args->sendBuff;
   uint8_t* myRecvBuff = (uint8_t*)args->recvBuff;
   void* peerRecvBuff;
   size_t offset;
   
-  size_t prefix[comm->nRanks];
-  prefix[0] = 0;
-  for (int i = 1; i < comm->nRanks; i++) {
-    prefix[i] = prefix[i-1] + offsets[i-1] * sizePerElt;
+  // Validate that displacement arrays are provided
+  if (args->sdispls == NULL || args->recvcounts == NULL || args->rdispls == NULL) {
+    WARN("AlltoAllV: sdispls, recvcounts, and rdispls arrays must not be NULL");
+    return ncclInvalidArgument;
   }
 
   struct ncclCeBatchOpsParams batchOpsParams = {};
@@ -449,16 +449,20 @@ ncclResult_t ncclCeAlltoAllV(struct ncclComm* comm, struct ncclCeCollArgs* args,
   for (int r = 0; r < comm->nRanks; r++) {
     int dstRank = (comm->rank + r) % comm->nRanks;
 
-    if (offsets[dstRank] == 0) continue;
+    if (sendcounts[dstRank] == 0) continue;
 
-    uint8_t* srcPtr = mySendBuff + prefix[dstRank];
-    uint8_t* dstPtr = myRecvBuff + prefix[comm->rank];
+    // Use actual user-provided displacements
+    // srcPtr: where in MY send buffer I read data to send TO dstRank
+    uint8_t* srcPtr = mySendBuff + args->sdispls[dstRank] * sizePerElt;
+    // dstPtr: where in rank dstRank's receive buffer I write data FROM comm->rank
+    // The offset is computed relative to my receive buffer base, then used to get dstRank's buffer
+    uint8_t* dstPtr = myRecvBuff + args->rdispls[comm->rank] * sizePerElt;
 
     if (dstRank == comm->rank) {
       // Local copy for own data
       batchOpsParams.srcs[batchOpsParams.numOps] = (void*)srcPtr;
       batchOpsParams.dsts[batchOpsParams.numOps] = (void*)dstPtr;
-      batchOpsParams.sizes[batchOpsParams.numOps] = offsets[dstRank] * sizePerElt;
+      batchOpsParams.sizes[batchOpsParams.numOps] = sendcounts[dstRank] * sizePerElt;
       batchOpsParams.numOps++;
     } else {
       // Remote copy to other ranks: send to rank dstRank's receive buffer at position comm->rank
@@ -466,7 +470,7 @@ ncclResult_t ncclCeAlltoAllV(struct ncclComm* comm, struct ncclCeCollArgs* args,
       NCCLCHECKGOTO(ncclDevrGetLsaRankPtr(comm, args->recvWin, offset, dstRank, &peerRecvBuff), ret, fail);
       batchOpsParams.srcs[batchOpsParams.numOps] = (void*)srcPtr;
       batchOpsParams.dsts[batchOpsParams.numOps] = (void*)peerRecvBuff;
-      batchOpsParams.sizes[batchOpsParams.numOps] = offsets[dstRank] * sizePerElt;
+      batchOpsParams.sizes[batchOpsParams.numOps] = sendcounts[dstRank] * sizePerElt;
       batchOpsParams.numOps++;
     }
   }

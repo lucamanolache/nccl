@@ -41,6 +41,10 @@ struct alignas(16) ncclCeCollArgs {
   uint8_t* recvBuff;
   struct ncclDevrWindow* sendWin;
   struct ncclDevrWindow* recvWin;
+  // AlltoAllV-specific arrays (only valid when func == ncclFuncAlltoAllV)
+  const size_t* sdispls;
+  const size_t* recvcounts;
+  const size_t* rdispls;
 };
 
 struct ncclCeBatchOpsParams {

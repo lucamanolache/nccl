@@ -126,7 +126,8 @@ ncclResult_t ncclAlltoAllV(const void* sendbuff, const size_t* sendcounts, const
   // Note: This assumes sizeof(size_t) == sizeof(void*) which is true on 64-bit systems
   struct ncclInfo info = { ncclFuncAlltoAllV, "AlltoAllV",
     sendbuff, recvbuff, (size_t)sendcounts, datatype, ncclSum, 0, comm, stream, /* Args */
-    ALLTOALL_CHUNKSTEPS, ALLTOALL_SLICESTEPS };
+    ALLTOALL_CHUNKSTEPS, ALLTOALL_SLICESTEPS, /* AlltoAllV arrays */
+    sdispls, recvcounts, rdispls };
   return ncclEnqueueCheck(&info);
 }
 

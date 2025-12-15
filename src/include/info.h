@@ -28,6 +28,10 @@ struct ncclInfo {
   // Algorithm details
   int chunkSteps;
   int sliceSteps;
+  // AlltoAllV-specific arrays (only valid when coll == ncclFuncAlltoAllV)
+  const size_t* sdispls;
+  const size_t* recvcounts;
+  const size_t* rdispls;
 };
 
 #endif

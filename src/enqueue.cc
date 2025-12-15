@@ -1447,6 +1447,16 @@ ncclResult_t ncclLaunchPrepare(struct ncclComm* comm) {
         plan->ceCollArgs->func = task->func;
         plan->ceCollArgs->sendWin = task->sendWin;
         plan->ceCollArgs->recvWin = task->recvWin;
+        // Copy AlltoAllV-specific arrays if this is an AlltoAllV operation
+        if (task->func == ncclFuncAlltoAllV) {
+          plan->ceCollArgs->sdispls = task->sdispls;
+          plan->ceCollArgs->recvcounts = task->recvcounts;
+          plan->ceCollArgs->rdispls = task->rdispls;
+        } else {
+          plan->ceCollArgs->sdispls = NULL;
+          plan->ceCollArgs->recvcounts = NULL;
+          plan->ceCollArgs->rdispls = NULL;
+        }
 
         ncclIntruQueueEnqueue(&planner->planQueue, plan);
         ncclIntruQueueDequeue(&planner->collCeTaskQueue);
@@ -2472,6 +2482,16 @@ static ncclResult_t collTaskAppend(
   t->count = info->count;
   t->root = info->root;
   t->datatype = info->datatype;
+  // Copy AlltoAllV-specific arrays if this is an AlltoAllV operation
+  if (t->func == ncclFuncAlltoAllV) {
+    t->sdispls = info->sdispls;
+    t->recvcounts = info->recvcounts;
+    t->rdispls = info->rdispls;
+  } else {
+    t->sdispls = NULL;
+    t->recvcounts = NULL;
+    t->rdispls = NULL;
+  }
   size_t elementSize = ncclTypeSize(t->datatype);
   if (t->func == ncclFuncAllGather || t->func == ncclFuncBroadcast) {
     t->count *= elementSize;
@@ -2533,6 +2553,16 @@ static ncclResult_t ceCollTaskAppend(
   t->count = info->count;
   t->root = info->root;
   t->datatype = info->datatype;
+  // Copy AlltoAllV-specific arrays if this is an AlltoAllV operation
+  if (t->func == ncclFuncAlltoAllV) {
+    t->sdispls = info->sdispls;
+    t->recvcounts = info->recvcounts;
+    t->rdispls = info->rdispls;
+  } else {
+    t->sdispls = NULL;
+    t->recvcounts = NULL;
+    t->rdispls = NULL;
+  }
   size_t elementSize = ncclTypeSize(t->datatype);
   if (t->func == ncclFuncAllGather || t->func == ncclFuncBroadcast) {
     t->count *= elementSize;
