@@ -16,6 +16,16 @@ COMMON_INC = ../../common/include
 COMMON_SRC = ../../common/src
 
 # Build configuration
+# If NCCL_HOME is not set, try to find NCCL in the source tree
+ifeq ($(NCCL_HOME),)
+  NCCL_ROOT := $(shell cd ../../.. && pwd)
+  ifeq ($(wildcard $(NCCL_ROOT)/src/nccl.h),)
+    $(warning NCCL_HOME not set and nccl.h not found. Please set NCCL_HOME or build NCCL first.)
+  else
+    NCCL_HOME := $(NCCL_ROOT)
+    INCLUDES += -I$(NCCL_ROOT)/src
+  endif
+endif
 INCLUDES += -I$(COMMON_INC)
 
 # Source files
