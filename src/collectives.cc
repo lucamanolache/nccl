@@ -15,6 +15,7 @@ const char* ncclFuncToString(ncclFunc_t fn) {
   case ncclFuncAllGather: return "AllGather";
   case ncclFuncAllReduce: return "AllReduce";
   case ncclFuncAlltoAll: return "AlltoAll";
+  case ncclFuncAlltoAllV: return "AlltoAllV";
   case ncclFuncBroadcast: return "Broadcast";
   case ncclFuncGather: return "Gather";
   case ncclFuncRecv: return "Recv";
@@ -100,6 +101,31 @@ ncclResult_t ncclAlltoAll(const void* sendbuff, void* recvbuff, size_t count,
 
   struct ncclInfo info = { ncclFuncAlltoAll, "AlltoAll",
     sendbuff, recvbuff, count, datatype, ncclSum, 0, comm, stream, /* Args */
+    ALLTOALL_CHUNKSTEPS, ALLTOALL_SLICESTEPS };
+  return ncclEnqueueCheck(&info);
+}
+
+NCCL_API(ncclResult_t, ncclAlltoAllV, const void* sendbuff, const size_t* sendcounts, const size_t* sdispls,
+    void* recvbuff, const size_t* recvcounts, const size_t* rdispls,
+    ncclDataType_t datatype, ncclComm* comm, cudaStream_t stream);
+ncclResult_t ncclAlltoAllV(const void* sendbuff, const size_t* sendcounts, const size_t* sdispls,
+    void* recvbuff, const size_t* recvcounts, const size_t* rdispls,
+    ncclDataType_t datatype, ncclComm* comm, cudaStream_t stream) {
+  // For AlltoAllV, we store the sendcounts pointer in the count field
+  // This will be used by the CE implementation to determine variable sizes
+  // TODO: Add NVTX support for AlltoAllV
+  // NVTX3_FUNC_WITH_PARAMS(AlltoAllV, NcclNvtxParamsAlltoAllV, ...);
+
+  // Validate inputs
+  if (sendcounts == NULL || recvcounts == NULL) {
+    WARN("AlltoAllV: sendcounts and recvcounts arrays must not be NULL");
+    return ncclInvalidArgument;
+  }
+
+  // Store sendcounts pointer in count field (will be cast back to pointer in CE implementation)
+  // Note: This assumes sizeof(size_t) == sizeof(void*) which is true on 64-bit systems
+  struct ncclInfo info = { ncclFuncAlltoAllV, "AlltoAllV",
+    sendbuff, recvbuff, (size_t)sendcounts, datatype, ncclSum, 0, comm, stream, /* Args */
     ALLTOALL_CHUNKSTEPS, ALLTOALL_SLICESTEPS };
   return ncclEnqueueCheck(&info);
 }

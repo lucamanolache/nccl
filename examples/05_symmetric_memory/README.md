@@ -24,6 +24,19 @@ consistent memory layouts.
   - Collective operations executed on symmetric windows
   - Correct deregistration and cleanup
 
+### [02_alltoallv](02_alltoallv/)
+**AlltoAllV with Symmetric Memory Windows**
+- **Pattern**: Variable-sized All-to-All collective with symmetric memory
+- **API**: `ncclCommWindowRegister`, `ncclCommWindowDeregister`, `ncclMemAlloc`,
+  `ncclAlltoAllV`
+- **Use case**: Variable-sized data transfers where each rank sends different
+  amounts to different destinations (priority-based transfers)
+- **Key features**:
+  - Variable send/receive counts per rank
+  - Send buffer organized by importance (most important data first)
+  - Uses CE (CUDA Engine) collectives when available
+  - Full verification of received data patterns
+
 ## Choosing the Right Pattern
 
 *Scenario* : Large-scale training with consistent memory patterns
@@ -61,6 +74,10 @@ make 01_allreduce
 # Build and run AllReduce with symmetric windows
 cd 01_allreduce && make
 ./allreduce_sm
+
+# Build and run AlltoAllV with symmetric windows
+cd 02_alltoallv && make
+./alltoallv_sm
 ```
 
 ## References
