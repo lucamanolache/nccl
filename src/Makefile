@@ -7,7 +7,7 @@ include ../makefiles/common.mk
 include ../makefiles/version.mk
 
 ##### src files
-INCEXPORTS  := nccl.h nccl_device.h \
+INCEXPORTS  := nccl.h nccl_device.h sym_kernels.h \
 	$(patsubst include/%,%,$(wildcard include/nccl_device/*.h include/nccl_device/*/*.h include/nccl_device/*/*/*.h))
 
 LIBSRCFILES := \
@@ -138,6 +138,11 @@ $(INCDIR)/%.h : %.h
 	install -m 644 $< $@
 
 $(INCDIR)/nccl_%.h : include/nccl_%.h
+	@printf "Grabbing   %-35s > %s\n" $< $@
+	mkdir -p $(INCDIR)
+	install -m 644 $< $@
+
+$(INCDIR)/sym_kernels.h : include/sym_kernels.h
 	@printf "Grabbing   %-35s > %s\n" $< $@
 	mkdir -p $(INCDIR)
 	install -m 644 $< $@
