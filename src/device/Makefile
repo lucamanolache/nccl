@@ -104,6 +104,9 @@ $(OBJDIR)/%.o: % $(OBJDIR)/%.d
 $(OBJDIR)/genobj/%.o: $(OBJDIR)/gensrc $(OBJDIR)/genobj/%.d
 	$(call COMPILE,$@,$(OBJDIR)/gensrc/$*)
 
+$(OBJDIR)/genobj/symmetric/sym_kernels_host.cc.o: $(OBJDIR)/gensrc/symmetric/sym_kernels_host.cc $(OBJDIR)/genobj/symmetric/sym_kernels_host.cc.d $(BUILDDIR)/include/nccl.h
+	$(call COMPILE,$@,$(OBJDIR)/gensrc/symmetric/sym_kernels_host.cc)
+
 $(OBJDIR)/genobj/symmetric/%.o: $(OBJDIR)/gensrc/symmetric $(OBJDIR)/genobj/symmetric/%.d
 	$(call COMPILE,$@,$(OBJDIR)/gensrc/symmetric/$*)
 
