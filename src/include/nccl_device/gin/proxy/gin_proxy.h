@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <cuda_runtime.h>
 #include <cooperative_groups.h>
-#include "nccl.h"
+#include <nccl.h>
 #include "nccl_device/utility.h"
 #include "../gin_device_host_common.h"
 #include "gin_proxy_device_host_common.h"
