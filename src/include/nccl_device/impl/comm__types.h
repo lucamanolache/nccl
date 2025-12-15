@@ -6,6 +6,7 @@
 
 #ifndef _NCCL_DEVICE_COMM__TYPES_H_
 #define _NCCL_DEVICE_COMM__TYPES_H_
+#include <nccl.h>
 #include "../comm.h"
 #include "core__types.h"
 #include "ll_a2a__types.h"

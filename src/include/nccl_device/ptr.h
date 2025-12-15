@@ -6,6 +6,7 @@
 
 #ifndef _NCCL_DEVICE_PTR_H_
 #define _NCCL_DEVICE_PTR_H_
+#include <nccl.h>
 #include "core.h"
 #include <stdint.h>
 
