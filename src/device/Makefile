@@ -64,7 +64,18 @@ define DEPENDS
  [[ $$mk =~ ^[^:]*:(.*)$$ ]];\
  files=$${BASH_REMATCH[1]};\
  files=$$(for x in $$files; do case "$$x" in '\'|$$'\t') ;; *) echo "$$x"; esac; done);\
- files=$$(for x in $$files; do [[ "$$(realpath "$$x")" == "$$(realpath "$(NCCLDIR)")"* ]] && echo "$$x"; done);\
+ files=$$(for x in $$files; do \
+   x_abs=$$(cd $(dir $2) && realpath "$$x" 2>/dev/null || echo "$$x");\
+   if [[ "$$x" == *"../include/net_device.h" ]] || [[ "$$x_abs" == *"/include/net_device.h" ]] && [[ ! "$$x_abs" == *"/nccl_device/net_device.h" ]]; then \
+     if [[ -f "$(BUILDDIR)/include/nccl_device/net_device.h" ]]; then \
+       echo "$(BUILDDIR)/include/nccl_device/net_device.h"; \
+     fi; \
+   elif [[ -f "$$x" ]] && [[ "$$(realpath "$$x" 2>/dev/null)" == "$$(realpath "$(NCCLDIR)")"* ]]; then \
+     echo "$$x"; \
+   elif [[ -f "$$x" ]] && [[ "$$(realpath "$$x" 2>/dev/null)" == "$$(realpath "$(BUILDDIR)")"* ]]; then \
+     echo "$$x"; \
+   fi; \
+ done);\
  echo "$(patsubst %.d,%.o,$1) $1: " $$files > $1
 endef
 
