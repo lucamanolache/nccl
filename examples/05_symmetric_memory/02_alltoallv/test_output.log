@@ -1,0 +1,16 @@
+Failed, NCCL error main.cc:207 'internal error - please report this issue to the NCCL developers'
+Failed NCCL operation: ncclAlltoAllV(d_sendbuff, sendcounts, sdispls, d_recvbuff, recvcounts, rdispls, ncclFloat, comm, stream)
+Failed, NCCL error main.cc:207 'internal error - please report this issue to the NCCL developers'
+Failed NCCL operation: ncclAlltoAllV(d_sendbuff, sendcounts, sdispls, d_recvbuff, recvcounts, rdispls, ncclFloat, comm, stream)
+Failed, NCCL error main.cc:207 'internal error - please report this issue to the NCCL developers'
+Failed, NCCL error main.cc:207 'internal error - please report this issue to the NCCL developers'
+Failed, NCCL error main.cc:207 'internal error - please report this issue to the NCCL developers'
+Failed NCCL operation: ncclAlltoAllV(d_sendbuff, sendcounts, sdispls, d_recvbuff, recvcounts, rdispls, ncclFloat, comm, stream)
+Failed NCCL operation: ncclAlltoAllV(d_sendbuff, sendcounts, sdispls, d_recvbuff, recvcounts, rdispls, ncclFloat, comm, stream)
+Failed, NCCL error main.cc:207 'unhandled cuda error (run with NCCL_DEBUG=INFO for details)'
+Failed NCCL operation: ncclAlltoAllV(d_sendbuff, sendcounts, sdispls, d_recvbuff, recvcounts, rdispls, ncclFloat, comm, stream)
+Failed NCCL operation: ncclAlltoAllV(d_sendbuff, sendcounts, sdispls, d_recvbuff, recvcounts, rdispls, ncclFloat, comm, stream)
+Failed, NCCL error main.cc:207 'internal error - please report this issue to the NCCL developers'
+Failed NCCL operation: ncclAlltoAllV(d_sendbuff, sendcounts, sdispls, d_recvbuff, recvcounts, rdispls, ncclFloat, comm, stream)
+Failed, NCCL error main.cc:207 'unhandled cuda error (run with NCCL_DEBUG=INFO for details)'
+Failed NCCL operation: ncclAlltoAllV(d_sendbuff, sendcounts, sdispls, d_recvbuff, recvcounts, rdispls, ncclFloat, comm, stream)

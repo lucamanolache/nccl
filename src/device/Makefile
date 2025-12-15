@@ -20,8 +20,8 @@ MANIFEST := $(OBJDIR)/manifest
 DEVGLUE_OBJ  := $(OBJDIR)/device_glue.o
 
 INCFLAGS  = -I. -I.. -I$(BUILDDIR)/include -I../include -I../include/plugin
-NVCUFLAGS += $(INCFLAGS) --compiler-options "-fPIC -fvisibility=hidden"
-CXXFLAGS  += $(INCFLAGS)
+NVCUFLAGS := $(INCFLAGS) $(NVCUFLAGS) --compiler-options "-fPIC -fvisibility=hidden"
+CXXFLAGS  := $(INCFLAGS) $(CXXFLAGS)
 
 NVCUFLAGS_SYM += -ccbin $(CXX) $(CXXSTD) --expt-extended-lambda -Xptxas -maxrregcount=128 -Xfatbin -compress-all
 NVCUFLAGS_SYM += $(INCFLAGS) --compiler-options "-fPIC -fvisibility=hidden"

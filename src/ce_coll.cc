@@ -448,29 +448,31 @@ ncclResult_t ncclCeAlltoAllV(struct ncclComm* comm, struct ncclCeCollArgs* args,
   // Copy data to other ranks: send data chunk for each destination rank
   for (int r = 0; r < comm->nRanks; r++) {
     int dstRank = (comm->rank + r) % comm->nRanks;
-    uint8_t* dstPtr = myRecvBuff + prefix[r];
 
-    if (offsets[r] == 0) continue;
+    if (offsets[dstRank] == 0) continue;
+
+    uint8_t* srcPtr = mySendBuff + prefix[dstRank];
+    uint8_t* dstPtr = myRecvBuff + prefix[comm->rank];
 
     if (dstRank == comm->rank) {
       // Local copy for own data
-      batchOpsParams.srcs[batchOpsParams.numOps] = (void*)mySendBuff;
+      batchOpsParams.srcs[batchOpsParams.numOps] = (void*)srcPtr;
       batchOpsParams.dsts[batchOpsParams.numOps] = (void*)dstPtr;
-      batchOpsParams.sizes[batchOpsParams.numOps] = offsets[r] * sizePerElt;
+      batchOpsParams.sizes[batchOpsParams.numOps] = offsets[dstRank] * sizePerElt;
       batchOpsParams.numOps++;
     } else {
       // Remote copy to other ranks: send to rank dstRank's receive buffer at position comm->rank
       offset = dstPtr - (uint8_t*)args->recvWin->userPtr;
       NCCLCHECKGOTO(ncclDevrGetLsaRankPtr(comm, args->recvWin, offset, dstRank, &peerRecvBuff), ret, fail);
-      batchOpsParams.srcs[batchOpsParams.numOps] = (void*)mySendBuff;
+      batchOpsParams.srcs[batchOpsParams.numOps] = (void*)srcPtr;
       batchOpsParams.dsts[batchOpsParams.numOps] = (void*)peerRecvBuff;
-      batchOpsParams.sizes[batchOpsParams.numOps] = offsets[r] * sizePerElt;
+      batchOpsParams.sizes[batchOpsParams.numOps] = offsets[dstRank] * sizePerElt;
       batchOpsParams.numOps++;
     }
   }
 
   // Check if we need to perform intra-batch synchronization
-  batchOpsParams.intraBatchSync = (batchOpsParams.numOps > comm->ceColl.intraBatchSyncFreq && chunkBytes*batchOpsParams.numOps >= comm->ceColl.intraBatchSyncMsgThreshold);
+  batchOpsParams.intraBatchSync = false;
 
   // Launch the batch operations
   NCCLCHECKGOTO(ncclCeLaunchBatchOps(comm, &batchOpsParams, stream), ret, fail);

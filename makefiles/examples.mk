@@ -4,15 +4,23 @@
 # See LICENSE.txt for license information
 #
 
+# Default to the in-tree NCCL build if NCCL_HOME is not provided. This makes the
+# examples pick up the freshly built headers/libs without requiring the user to
+# export NCCL_HOME manually.
+ifeq ($(strip $(NCCL_HOME)),)
+NCCL_HOME := $(abspath $(CURDIR)/../../..)/build
+endif
+
 # Make sure NCCL headers are found and libraries are linked
-ifneq ($(NCCL_HOME), "")
+ifneq ($(strip $(NCCL_HOME)),)
+CXXFLAGS := -I$(NCCL_HOME)/include $(CXXFLAGS)
 NVCUFLAGS += -I$(NCCL_HOME)/include/
 NVLDFLAGS += -L$(NCCL_HOME)/lib
 endif
 
 # Build configuration
-INCLUDES = -I$(CUDA_HOME)/include -I$(NCCL_HOME)/include
-LIBRARIES = -L$(CUDA_HOME)/lib64 -L$(NCCL_HOME)/lib
+INCLUDES = -I$(NCCL_HOME)/include -I$(CUDA_HOME)/include
+LIBRARIES = -L$(NCCL_HOME)/lib -L$(CUDA_HOME)/lib64
 LDFLAGS = -lcudart -lnccl -Wl,-rpath,$(NCCL_HOME)/lib
 
 
