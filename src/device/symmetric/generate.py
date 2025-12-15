@@ -240,6 +240,7 @@ for (fname, coll), ks in kernels_by_file.items():
 
 # Generate <gensrc>/sym_kernels_host.cc
 with open(os.path.join(gensrc, "sym_kernels_host.cc"), "w") as f:
+  # Include nccl.h first to ensure ncclFloat8e4m3, ncclFloat8e5m2, and ncclWindow_t are available
   emitln(f, '#include "nccl.h"')
   emitln(f, '#include "sym_kernels.h"')
   emitln(f, '#include "device.h"')
