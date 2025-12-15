@@ -469,8 +469,9 @@ ncclResult_t ncclCeAlltoAllV(struct ncclComm* comm, struct ncclCeCollArgs* args,
     }
   }
 
-  // Check if we need to perform intra-batch synchronization
-  batchOpsParams.intraBatchSync = (batchOpsParams.numOps > comm->ceColl.intraBatchSyncFreq && chunkBytes*batchOpsParams.numOps >= comm->ceColl.intraBatchSyncMsgThreshold);
+  // Disable intra-batch synchronization for AlltoAllV to allow GPUs to start computation
+  // as soon as they receive their data, without waiting for all ranks to complete each batch
+  batchOpsParams.intraBatchSync = false;
 
   // Launch the batch operations
   NCCLCHECKGOTO(ncclCeLaunchBatchOps(comm, &batchOpsParams, stream), ret, fail);
